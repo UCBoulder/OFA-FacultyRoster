@@ -1,4 +1,3 @@
-%let year = 2024; 
 /*
 CourseLeaf ID 
 FIS ID 
@@ -66,7 +65,8 @@ proc sql;
 	EMPLOYEE_PREF_MIDDLE_NAME as PREF_MIDDLE,
 	EMPLOYEE_PREF_LAST_NAME as PREF_LAST,
 	EMPLOYEE_PREF_NAME as PREF_NAME,
-	EMPLOYEE_NAME_SUFFIX as SUFFIX
+	EMPLOYEE_NAME_SUFFIX as SUFFIX,
+	EMPLOYEE_NAME_PREFIX as PREFIX
 	from ciwdb.HRMS_PERSONAL_TBL;
 quit;
 
@@ -121,23 +121,25 @@ quit;
 proc sql; 
 	create table job_category as
 	select distinct
-	jobcode,
-	jobtitle,
+	JB_CODE,
+	JB_DESC,
 		CASE
-	    WHEN jobcode IN ('1101', '1102', '1103') THEN 'TTT'
-	    WHEN jobcode IN ('1107', '1108', '1109', '1201', '1202', '1203', '1204', '1205', 
+	    WHEN JB_CODE IN ('1101', '1102', '1103') THEN 'TTT'
+	    WHEN JB_CODE IN ('1107', '1108', '1109', '1201', '1202', '1203', '1204', '1205', 
 	                     '1211', '1212', '1213', '1214', '1215', '1221', '1222', '1223', '1224') THEN 'TCL'
-	    WHEN jobcode IN ('1301', '1302', '1303', '1304', '1311') THEN 'Research Professor'
-	    WHEN jobcode = '1442' THEN 'In-Residence'
-	    WHEN jobcode = '5102' THEN 'Emeritus'
-	    WHEN jobcode = '1419' THEN 'Temporary'
-	    WHEN jobcode = '1100' THEN 'Distinguished'
-	    WHEN jobcode IN ('1446', '2205', '2206', '2207', '2208', '2209', '2210', '2214') THEN 'Administrative'
-	    WHEN jobcode IN ('1450', '1451') THEN 'Endowed'
+	    WHEN JB_CODE IN ('1301', '1302', '1303', '1304', '1311') THEN 'Research Professor'
+	    WHEN JB_CODE = '1442' THEN 'In-Residence'
+	    WHEN JB_CODE = '5102' THEN 'Emeritus'
+	    WHEN JB_CODE = '1419' THEN 'Temporary'
+	    WHEN JB_CODE = '1100' THEN 'Distinguished'
+	    WHEN JB_CODE IN ('1446', '2205', '2206', '2207', '2208', '2209', '2210', '2214') THEN 'Administrative'
+	    WHEN JB_CODE IN ('1450', '1451') THEN 'Endowed'
 	    ELSE 'Unknown'
 	END AS job_category
-	from edb.pers&year.
-	where calculated job_category ne 'Unknown'
-group by jobcode;
+	from ciwdb.hrms_job_code_tbl
+	where 1=1 
+		and calculated job_category ne 'Unknown'
+		and DATE() BETWEEN JB_EFFECTIVE_DATE AND JB_EXPIRATION_DATE
+group by JB_CODE;
 quit;
 
