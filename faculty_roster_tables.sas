@@ -1,3 +1,19 @@
+%let snapdate=01JUN2025 ;  	* snap date. **MUST** be in ddMMMyyyy format! ;
+%let status = DRAFT ; 		* set DRAFT or FINAL date;
+
+%let snapdate=%upcase(&snapdate) ;		* e.g., 01NOV2017 ;
+%let snapdt=%substr(&snapdate,1,5) ; 	* e.g., 01NOV ;
+%let dsstatus = %sysfunc( ifc(%upcase(&status)=DRAFT,.DEF,%str()) ) ;  * If status=DRAFT, set dsstatus=.DEF. If NOT DRAFT (i.e., FINAL), set dsstatus= ;
+%let dstitle=%sysfunc(ifc(&snapdt=01NOV,
+					      %substr(&snapdate,6,4), 								/* e.g., 2017, if 01NOV snapday */
+						  %substr(&snapdate,6,4)%substr(&snapdate,1,5))) ;		/* e.g., 201701MAY if 01MAY snapday */
+
+%let lib = E&dsstatus. ;
+%let ln = %sysfunc(compress(&lib.,'.')) ;
+%put &ln.db.appts&dstitle.;
+ 
+proc sql; select distinct jobcode from &ln.db.appts&dstitle. where eid = '340227'; quit;
+
 libname lib 'L:\IR\facstaff\OFA\Faculty Roster';
 
 /* EID x FISID Crosswalk */
@@ -107,25 +123,83 @@ proc sql;
 	create table appts as
 	select distinct 
     a.EID, id.FIS_ID, Name, jobcode, jobtitle, Time as ApptFTE, DeptID, DeptName, SnapDate 
-	from edb.appts2024 a
+	from &ln.db.appts&dstitle. a
 	left join id
 		on a.EID = id.EID
-	where jobcode in 
-(
-    '1100', '1101', '1102', '1103', '1104', '1105', '1107', '1108', '1109', 
-    '1201', '1202', '1203', '1204', '1205', '1211', '1211C', '1212', '1212C', 
-    '1213', '1213C', '1214', '1214C', '1215', '1215C', '1442', '1449', '1301', 
-    '1302', '1303', '1304', '1311', '1419', '1401', '1402', '1403', '1405', 
-    '1420', '1422', '1425', '5102', '1446', '1423', '2205', '2206', 
-    '2207', '2208', '2209', '2210', '1428', '2214', '1433', '1434', '1435', 
-    '1436', '1439', '1100FF', '1101FF', '1102FF', '1103FF', '1104FF', '1105FF', 
-    '1106FF', '1107FF', '1108FF', '1109FF', '1450', '1451'
+where jobcode in (
+    '1101FF',  /* PROFESSOR-FF */
+    '1103',    /* ASSISTANT PROFESSOR */
+    '1202',    /* CLINICAL ASSOCIATE PROFESSOR */
+    '1213',    /* ASST PROFESSOR CLINICAL (C/T) */
+    '1401',    /* VISITING PROFESSOR */
+    '1423',    /* MUSEUM CURATOR */
+    '1101',    /* PROFESSOR */
+    '1104FF',  /* SENIOR INSTRUCTOR-FF */
+    '1211',    /* PROFESSOR CLINICAL (C/T) */
+    '1215C',   /* INSTRUCTOR CLINICAL (C/T)- 9MO */
+    '1403',    /* VISITING ASSISTANT PROFESSOR */
+    '1107',    /* TEACHING PROFESSOR */
+    '1213C',   /* ASST PROF CLINICAL (C/T)-9MO */
+    '1405',    /* SPECIAL VISITING PROFESSOR */
+    '1436',    /* ASSOC CHAIR */
+    '1450',    /* ENDOWED OR NAMED PROFESSOR */
+    '2207',    /* PROVOST */
+    '1106FF',  /* PRINCIPAL INSTRUCTOR-FF */
+    '1301',    /* RESEARCH PROFESSOR */
+    '1449',    /* ARTIST IN RESIDENCE */
+    '5102',    /* FACULTY RETIREE EMERITUS ORP */
+    '1104',    /* SENIOR INSTRUCTOR */
+    '1205',    /* CLINICAL INSTRUCTOR */
+    '1214',    /* SR INSTRUCTOR CLINICAL (C/T) */
+    '1435',    /* CHAIR */
+    '1442',    /* SCHOLAR IN RESIDENCE */
+    '2208',    /* EXECUTIVE VICE CHANCELLOR */
+    '1100FF',  /* DISTINGUISHED PROFESSOR-FF */
+    '1302',    /* ASSOCIATE RESEARCH PROFESSOR */
+    '1103FF',  /* ASSISTANT PROFESSOR-FF */
+    '1303',    /* ASSISTANT RESEARCH PROFESSOR */
+    '2210',    /* ASSOC VICE CHANCELLOR */
+    '1108FF',  /* ASSC TEACHING PROFESSOR-FF */
+    '1212C',   /* ASSC PROF CLINICAL (C/T)-9MO */
+    '1451',    /* ENDOWED CHAIR */
+    '1109',    /* ASSISTANT TEACHING PROFESSOR */
+    '1109FF',  /* ASST TEACHING PROFESSOR-FF */
+    '2205',    /* CHANCELLOR */
+    '2214',    /* DEAN */
+    '1304',    /* RESEARCH SCIENTIST */
+    '1419',    /* LECTURER */
+    '2206',    /* EXECUTIVE VICE CHANCELLOR/VP */
+    '1108',    /* ASSOCIATE TEACHING PROFESSOR */
+    '1428',    /* ASSOC DEAN-FACULTY */
+    '1439',    /* FACULTY FELLOW */
+    '1105FF',  /* INSTRUCTOR-FF */
+    '1311',    /* SENIOR RESEARCH SCIENTIST */
+    '1102',    /* ASSOCIATE PROFESSOR */
+    '1102FF',  /* ASSOCIATE PROFESSOR-FF */
+    '1203',    /* CLINICAL ASSISTANT PROFESSOR */
+    '1212',    /* ASSC PROFESSOR CLINICAL (C/T) */
+    '1422',    /* VISITING INSTRUCTOR */
+    '1433',    /* DIRECTOR-FACULTY */
+    '1100',    /* DISTINGUISHED PROFESSOR */
+    '1107FF',  /* TEACHING PROFESSOR-FF */
+    '1201',    /* CLINICAL PROFESSOR */
+    '1214C',   /* SR INSTR CLINICAL (C/T)-9MO */
+    '1402',    /* VISITING ASSOCIATE PROFESSOR */
+    '1420',    /* VISITING LECTURER */
+    '1446',    /* DIRECTOR-INSTITUTE */
+    '1105',    /* INSTRUCTOR */
+    '1204',    /* CLINICAL SENIOR INSTRUCTOR */
+    '1211C',   /* PROFESSOR CLINICAL (C/T)-9MO */
+    '1215',    /* INSTRUCTOR CLINICAL (C/T) */
+    '1425',    /* VISITING MUSEUM CURATOR */
+    '1434',    /* ASSOC DIRECTOR-FACULTY */
+    '2209'     /* VICE CHANCELLOR */
 );
 
 	create table retirees as
 	select distinct 
 	r.EID, id.FIS_ID, Name, JobCode, JobTitle, ApptPctTime as ApptFTE, DeptID, DeptName, SnapDate
-	from edb.retirees2024 r
+	from &ln.db.retirees&dstitle. r
 	left join id
 		on r.EID = id.EID
 	where jobcode in ('1448', '1452', '1453', '1454', '1455', 
