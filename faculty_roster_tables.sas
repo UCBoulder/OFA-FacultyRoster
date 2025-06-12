@@ -1,47 +1,4 @@
-/*
-CourseLeaf ID 
-FIS ID 
-EmplID 
-First name 
-Middle name 
-Last name 
-Suffix name 
-Displayname (Preferred Name) 
-Lastfirstname 
-Academic Rank 
-Academic rank no display title 
-Url 
-Home dept 
-Primary affiliation 
-Fis employment status 
-Degrees (top one) 
-Academic Positions  
-	
-	Tenure/Tenure-Track Appointments
-		1101, 1102, 1103 
-	Teaching/Clinical/Librarian Faculty Appointments
-		1107, 1108, 1109, 1201, 1202, 1203, 1204, 1205, 1211, 1212, 1213, 1214, 1215, 1221, 1222, 1223, 1224
-	Research Professor Series 
-		1301, 1302, 1303, 1304, 1311, 
-	In-Residence Appointments 
-	Emeritus Appointments
-		5102 
-	Temporary Appointments (Lecturers)
-		1419 
-	Distinguished Appointments
-		1100 
-	Administrative Appointments 
-	 	1446 Director-Institute
-	 	2205 Chancellor
-	 	2206 Executive Vice Chancellor/VP
-	 	2207 Provost
-	 	2208 Executive Vice Chancellor
-	 	2209 Vice Chancellor
-	 	2210 Assoc Vice Chancellor
-	 	2214 Dean
-	Endowed Appointments 
-		1450, 1451
-*/
+libname lib 'L:\IR\facstaff\OFA\Faculty Roster';
 
 /* EID x FISID Crosswalk */
 proc sql; 
@@ -52,47 +9,68 @@ proc sql;
 	order by EMPLID;
 quit;
 
-/* Name */
-proc sql; 
-	create table name as
-	select distinct
-	EMPLOYEE_ID as EID,
-	EMPLOYEE_NAME as NAME,
-	EMPLOYEE_FIRST_NAME as FIRST,
-	EMPLOYEE_MIDDLE_NAME as MIDDLE,
-	EMPLOYEE_LAST_NAME as LAST,
-	EMPLOYEE_PREF_FIRST_NAME as PREF_FIRST,
-	EMPLOYEE_PREF_MIDDLE_NAME as PREF_MIDDLE,
-	EMPLOYEE_PREF_LAST_NAME as PREF_LAST,
-	EMPLOYEE_PREF_NAME as PREF_NAME,
-	EMPLOYEE_NAME_SUFFIX as SUFFIX,
-	EMPLOYEE_NAME_PREFIX as PREFIX
-	from ciwdb.HRMS_PERSONAL_TBL;
-quit;
+/* Degree - fis degree information highly missing. Relying on Academic Analytics for first match, then FIS if missing
+	- Retrieve csv from https://portal.academicanalytics.com/resources/downloads
+	> Benchmarking > aa_fd_person
+	update csv file location
+*/
+proc import datafile="L:\IR\facstaff\OFA\Faculty Roster\aa_fd_person_2025-3-25_10-39-37.csv"
+     out=aa_degree
+     dbms=csv
+     replace;
+run;
 
-/* Home Dept */
-proc sql; 
-	create table department as
-	select distinct
-	EMPLOYEE_ID as EID,
-	EMPLOYEE_HOME_DEPT_ID
-	from ciwdb.HRMS_PERSONAL_TBL;
-quit;
-
-/* Degree */
-data degree;
+data fis_degree;
 set fisdb.fis_degree;
 run;
 	
-proc sort data=degree;
+proc sort data=fis_degree;
     by FIS_ID descending DEGREE_YEAR;
 run;
 
-data top_degree (keep = FIS_ID DEGREE_YEAR DEGREE_NAME);
-    set degree;
+data fis_top_degree (keep = FIS_ID DEGREE_YEAR DEGREE_NAME);
+    set fis_degree;
     by FIS_ID descending DEGREE_YEAR;
     if first.FIS_ID;
 run;
+
+proc sql; 
+	create table fis_top_degree_final as
+	select id.EID, d.* 
+	from fis_top_degree d
+	left join id
+		on d.FIS_ID = id.FIS_ID;
+quit;
+
+proc sql; 
+	create table degree as
+	select distinct 
+	id.FIS_ID, 
+	id.EID,
+	case when id.EID in (select distinct clientfacultyid from aa_degree)
+		then aa.degreetypename
+	else fis.DEGREE_NAME
+	end as DegreeName,
+	case when id.EID in (select distinct clientfacultyid from aa_degree)
+		then aa.degreeyear
+	else fis.DEGREE_YEAR
+	end as DegreeYear,
+	case when id.EID in (select distinct clientfacultyid from aa_degree)
+		then "AA" 
+		when id.EID in (select distinct EID from fis_top_degree_final) 
+		then "FIS" 
+		else "NA"
+	end as DegreeSource
+	from id 
+	left join 
+		aa_degree aa
+		on id.EID = aa.clientfacultyid
+	left join
+		fis_top_degree_final fis
+		on id.EID = fis.EID;
+quit;
+
+		
 
 /* CU Experts URL */
 /* Check that all accounts slated to be exported to CU Experts. From Vance Howard */
@@ -104,6 +82,13 @@ quit;
 
 /* EXPERTS LINK:
 	https://experts.colorado.edu/display/fisid_[FISID] */
+
+/* Check that all accounts slated to be exported to CU Experts. From Vance Howard */
+proc sql; 
+	create table expert_link as
+	select FIS_ID 
+		from fisdb.vivo_etl_person where export_to_vivo = 'Y';
+quit;
 proc sql; 
 	create table 
 	url as
@@ -119,27 +104,49 @@ proc sql;
 quit;
 
 proc sql; 
-	create table job_category as
-	select distinct
-	JB_CODE,
-	JB_DESC,
-		CASE
-	    WHEN JB_CODE IN ('1101', '1102', '1103') THEN 'TTT'
-	    WHEN JB_CODE IN ('1107', '1108', '1109', '1201', '1202', '1203', '1204', '1205', 
-	                     '1211', '1212', '1213', '1214', '1215', '1221', '1222', '1223', '1224') THEN 'TCL'
-	    WHEN JB_CODE IN ('1301', '1302', '1303', '1304', '1311') THEN 'Research Professor'
-	    WHEN JB_CODE = '1442' THEN 'In-Residence'
-	    WHEN JB_CODE = '5102' THEN 'Emeritus'
-	    WHEN JB_CODE = '1419' THEN 'Temporary'
-	    WHEN JB_CODE = '1100' THEN 'Distinguished'
-	    WHEN JB_CODE IN ('1446', '2205', '2206', '2207', '2208', '2209', '2210', '2214') THEN 'Administrative'
-	    WHEN JB_CODE IN ('1450', '1451') THEN 'Endowed'
-	    ELSE 'Unknown'
-	END AS job_category
-	from ciwdb.hrms_job_code_tbl
-	where 1=1 
-		and calculated job_category ne 'Unknown'
-		and DATE() BETWEEN JB_EFFECTIVE_DATE AND JB_EXPIRATION_DATE
-group by JB_CODE;
+	create table appts as
+	select distinct 
+    a.EID, id.FIS_ID, Name, jobcode, jobtitle, Time as ApptFTE, DeptID, DeptName, SnapDate 
+	from edb.appts2024 a
+	left join id
+		on a.EID = id.EID
+	where jobcode in 
+(
+    '1100', '1101', '1102', '1103', '1104', '1105', '1107', '1108', '1109', 
+    '1201', '1202', '1203', '1204', '1205', '1211', '1211C', '1212', '1212C', 
+    '1213', '1213C', '1214', '1214C', '1215', '1215C', '1442', '1449', '1301', 
+    '1302', '1303', '1304', '1311', '1419', '1401', '1402', '1403', '1405', 
+    '1420', '1422', '1425', '5102', '1446', '1423', '2205', '2206', 
+    '2207', '2208', '2209', '2210', '1428', '2214', '1433', '1434', '1435', 
+    '1436', '1439', '1100FF', '1101FF', '1102FF', '1103FF', '1104FF', '1105FF', 
+    '1106FF', '1107FF', '1108FF', '1109FF', '1450', '1451'
+);
+
+	create table retirees as
+	select distinct 
+	r.EID, id.FIS_ID, Name, JobCode, JobTitle, ApptPctTime as ApptFTE, DeptID, DeptName, SnapDate
+	from edb.retirees2024 r
+	left join id
+		on r.EID = id.EID
+	where jobcode in ('1448', '1452', '1453', '1454', '1455', 
+    '1456', '1457', '2100', '2186' '2902' '2900' '2901' '1601');
 quit;
 
+data pre_roster;
+	set appts
+		retirees;
+run;
+
+proc sql; 
+	create table roster as
+	select r.*, d.*, u.*
+	from pre_roster r
+	left join
+		degree d
+		on r.EID= d.EID
+	left join url u
+		on r.FIS_ID = u.FIS_ID
+	order by EID, JobCode;
+quit;
+
+%xlsexport(L:\IR\facstaff\OFA\Faculty Roster\tool_roster.xlsx,roster);
