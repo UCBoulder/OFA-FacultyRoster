@@ -1,3 +1,21 @@
+%let snapdate=01JUN2025 ;  	* snap date. **MUST** be in ddMMMyyyy format! ;
+%let status = DRAFT ; 		* set DRAFT or FINAL date;
+
+%let snapdate=%upcase(&snapdate) ;		* e.g., 01NOV2017 ;
+%let snapdt=%substr(&snapdate,1,5) ; 	* e.g., 01NOV ;
+%let dsstatus = %sysfunc( ifc(%upcase(&status)=DRAFT,.DEF,%str()) ) ;  * If status=DRAFT, set dsstatus=.DEF. If NOT DRAFT (i.e., FINAL), set dsstatus= ;
+%let dstitle=%sysfunc(ifc(&snapdt=01NOV,
+					      %substr(&snapdate,6,4), 								/* e.g., 2017, if 01NOV snapday */
+						  %substr(&snapdate,6,4)%substr(&snapdate,1,5))) ;		/* e.g., 201701MAY if 01MAY snapday */
+
+%let lib = E&dsstatus. ;
+%let ln = %sysfunc(compress(&lib.,'.')) ;
+%put &ln.db.appts&dstitle.;
+ 
+proc sql; select distinct jobcode from &ln.db.appts&dstitle. where eid = '340227'; quit;
+
+libname lib 'L:\IR\facstaff\OFA\Faculty Roster';
+
 /* EID x FISID Crosswalk */
 proc sql; 
 	create table id as
@@ -149,7 +167,7 @@ where jobcode in (
     '2205',    /* CHANCELLOR */
     '2214',    /* DEAN */
     '1304',    /* RESEARCH SCIENTIST */
-    '1419',    /* LECTURER */
+    /* '1419',     LECTURER */
     '2206',    /* EXECUTIVE VICE CHANCELLOR/VP */
     '1108',    /* ASSOCIATE TEACHING PROFESSOR */
     '1428',    /* ASSOC DEAN-FACULTY */
@@ -167,7 +185,7 @@ where jobcode in (
     '1201',    /* CLINICAL PROFESSOR */
     '1214C',   /* SR INSTR CLINICAL (C/T)-9MO */
     '1402',    /* VISITING ASSOCIATE PROFESSOR */
-    '1420',    /* VISITING LECTURER */
+  /*  '1420',    /* VISITING LECTURER */
     '1446',    /* DIRECTOR-INSTITUTE */
     '1105',    /* INSTRUCTOR */
     '1204',    /* CLINICAL SENIOR INSTRUCTOR */
@@ -184,8 +202,22 @@ where jobcode in (
 	from &ln.db.retirees&dstitle. r
 	left join id
 		on r.EID = id.EID
-	where jobcode in ('1448', '1452', '1453', '1454', '1455', 
-    '1456', '1457', '2100', '2186' '2902' '2900' '2901' '1601');
+	where jobcode in 
+	(
+    '1448',  /* EMERITUS */
+    '1452',  /* EMERITUS - PROFESSOR */
+    '1453',  /* EMERITUS - ASSOCIATE PROFESSOR */
+    '1454',  /* EMERITUS - ASSISTANT PROFESSOR */
+    '1455',  /* EMERITUS - SENIOR INSTRUCTOR */
+    '1456',  /* EMERITUS - INSTRUCTOR */
+    '1457',  /* DEAN EMERITUS */
+    '1601',  /* OFFICER EMERITUS/A */
+    '2100',  /* PRESIDENT EMERITUS */
+    '2186',  /* CHANCELLOR EMERITUS */
+    '2900',  /* PRESIDENT EMERITUS */
+    '2901',  /* CHANCELLOR EMERITUS */
+    '2902'   /* DEAN EMERITUS */
+	);
 quit;
 
 data pre_roster;
