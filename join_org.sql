@@ -14,7 +14,12 @@ select roster.*,
         WHEN 'COLLEGE OF MUSIC'         THEN 'College of Music'
         ELSE 'NA'
     END AS collegedesc_new,
-    org.ASDIV
+    CASE org.ASDIV
+        WHEN 'SS' THEN 'Social Sciences'
+        WHEN 'NS' THEN 'Natural Sciences'
+        WHEN 'AH' THEN 'Arts & Humanities'
+        ELSE ''
+    END AS ASDIV_new
 from TEST.BLD_OIT_DNA_IR.RPT_FACULTY_ROSTER_AND_CATALOG_ORIGINAL roster
 left join CU_ORG org
 on roster.deptid = org.deptid
