@@ -23,7 +23,6 @@
     '1442','1449';
 
 *************************************************************************************;
-
 %let snapdate=%upcase(&snapdate) ;		* e.g., 01NOV2017 ;
 %let snapdt=%substr(&snapdate,1,5) ; 	* e.g., 01NOV ;
 %let dsstatus = %sysfunc( ifc(%upcase(&status)=DRAFT,.DEF,%str()) ) ;  * If status=DRAFT, set dsstatus=.DEF. If NOT DRAFT (i.e., FINAL), set dsstatus= ;
@@ -34,5 +33,9 @@
 %let lib = E&dsstatus. ;
 %let ln = %sysfunc(compress(&lib.,'.')) ;
 %put &ln.db.appts&dstitle.;
- 
+
+%let month = %substr(&snapdate,3,3);   /* Extracts JUN */
+%let year  = %substr(&snapdate,6,4);   /* Extracts 2025 */
+
+%put &month. &year.; 
 libname lib 'L:\IR\facstaff\OFA\Faculty Roster';
