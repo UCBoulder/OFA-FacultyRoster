@@ -18,9 +18,21 @@ proc import datafile="L:\IR\facstaff\OFA\Faculty Roster\aa_fd_person_2025-3-25_1
      replace;
 run;
 
-data fis_degree;
+data fis_degree_v1;
 set fisdb.fis_degree;
 run;
+
+proc sql; 
+	create table fis_degree as
+	select distinct 
+	d.FIS_ID, 
+	d.DEGREE_YEAR, 
+	d.DEGREE_NAME,
+	i.INSTITUTION_NAME_DISPLAY
+		from fis_degree_v1 d
+	left join fisdb.fis_institution i
+		on d.INSTITUTION_CODE = i.unitid_code;
+quit;
 	
 proc sort data=fis_degree;
     by FIS_ID descending DEGREE_YEAR;
