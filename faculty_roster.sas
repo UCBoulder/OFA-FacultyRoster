@@ -18,8 +18,16 @@ proc import datafile="L:\IR\facstaff\OFA\Faculty Roster\aa_fd_person_2025-3-25_1
      replace;
 run;
 
-data fis_degree_v1;
-	set fisdb.fis_degree;
+proc sql; 
+	create table fis_degree_v1 as
+	select distinct 
+		degree.FIS_ID,
+		degree.DEGREE_YEAR,
+		name.DEGREE_NAME,
+		degree.INSTITUTION_CODE
+	from fisdb.fis_degree degree
+		left join fisdb.fis_degree_name name
+			on name.DEGREE_NAME_ID = degree.DEGREE_NAME_ID;
 run;
 
 proc sql; 
@@ -57,18 +65,18 @@ proc sql;
 	select distinct 
 	id.FIS_ID, 
 	id.EID,
-	case when id.EID in (select distinct clientfacultyid from aa_degree)
-		then aa.degreetypename
-	else fis.DEGREE_NAME
+	case when id.EID in (select distinct EID from fis_top_degree_final)
+		then fis.DEGREE_NAME 
+	else aa.degreetypename
 	end as DegreeName,
-	case when id.EID in (select distinct clientfacultyid from aa_degree)
-		then aa.degreeyear
-	else fis.DEGREE_YEAR
+	case when id.EID in (select distinct EID from fis_top_degree_final)
+		then fis.DEGREE_YEAR 
+	else aa.degreeyear
 	end as DegreeYear,
 
-	case when id.EID in (select distinct clientfacultyid from aa_degree)
-		then aa.degreeinstitutionname
-	else fis.INSTITUTION_NAME_DISPLAY
+	case when id.EID in (select distinct EID from fis_top_degree_final)
+		then fis.INSTITUTION_NAME_DISPLAY
+	else aa.degreeinstitutionname 
 	end as DEGREE_INST,
 	case when id.EID in (select distinct clientfacultyid from aa_degree)
 		then "AA" 
