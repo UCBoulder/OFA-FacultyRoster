@@ -18,16 +18,8 @@ proc import datafile="L:\IR\facstaff\OFA\Faculty Roster\aa_fd_person_2025-3-25_1
      replace;
 run;
 
-proc sql; 
-	create table fis_degree_v1 as
-	select distinct 
-		degree.FIS_ID,
-		degree.DEGREE_YEAR,
-		name.DEGREE_NAME,
-		degree.INSTITUTION_CODE
-	from fisdb.fis_degree degree
-		left join fisdb.fis_degree_name name
-			on name.DEGREE_NAME_ID = degree.DEGREE_NAME_ID;
+data fis_degree_v1;
+set fisdb.fis_degree;
 run;
 
 proc sql; 
@@ -46,7 +38,7 @@ proc sort data=fis_degree;
     by FIS_ID descending DEGREE_YEAR;
 run;
 
-data fis_top_degree (keep = FIS_ID DEGREE_YEAR DEGREE_NAME INSTITUTION_NAME_DISPLAY);
+data fis_top_degree (keep = FIS_ID DEGREE_YEAR DEGREE_NAME);
     set fis_degree;
     by FIS_ID descending DEGREE_YEAR;
     if first.FIS_ID;
@@ -65,19 +57,14 @@ proc sql;
 	select distinct 
 	id.FIS_ID, 
 	id.EID,
-	case when id.EID in (select distinct EID from fis_top_degree_final)
-		then fis.DEGREE_NAME 
-	else aa.degreetypename
+	case when id.EID in (select distinct clientfacultyid from aa_degree)
+		then aa.degreetypename
+	else fis.DEGREE_NAME
 	end as DegreeName,
-	case when id.EID in (select distinct EID from fis_top_degree_final)
-		then fis.DEGREE_YEAR 
-	else aa.degreeyear
+	case when id.EID in (select distinct clientfacultyid from aa_degree)
+		then aa.degreeyear
+	else fis.DEGREE_YEAR
 	end as DegreeYear,
-
-	case when id.EID in (select distinct EID from fis_top_degree_final)
-		then fis.INSTITUTION_NAME_DISPLAY
-	else aa.degreeinstitutionname 
-	end as DEGREE_INST,
 	case when id.EID in (select distinct clientfacultyid from aa_degree)
 		then "AA" 
 		when id.EID in (select distinct EID from fis_top_degree_final) 
@@ -233,7 +220,7 @@ data pre_roster;
 run;
 
 proc sql;
-    create table roster_v1 as
+    create table roster as
     select 
         r.*, 
         d.*, 
@@ -248,6 +235,7 @@ proc sql;
         case 
             when r.jobcode in (&catalog_jobcodes) then 1 else 0 
         end as Catalog_Flag
+/*		monotonic() as rowNo*/
 
     from pre_roster r
     left join degree d on r.EID = d.EID
@@ -255,46 +243,24 @@ proc sql;
     order by r.EID, r.JobCode;
 quit;
 
+data roster_final;  
+    set roster;
+    by EID JobCode;
+    if first.EID then rowNo=1;
+    else rowNo+1;
+run;
+
 title "Campus Tool Only";
 proc sql; 
-	select distinct jobtitle, jobcode from roster_v1 where Campus_Tool_Flag = 1 order by jobcode; quit;
+	select distinct jobtitle, jobcode from roster_final where Campus_Tool_Flag = 1 order by jobcode; quit;
 
 title "Catalog Only";
 proc sql; 
-	select distinct jobtitle, jobcode from roster_v1 where Catalog_Flag = 1 order by jobcode; quit;
-
-
-proc sql;
-create table 
-	roster as 
-select roster.*,
-    CASE org.collegedesc
-        WHEN 'COLLEGE ARTS & SCIENCES' THEN 'College of Arts & Sciences'
-        WHEN 'DN,CE & AVC, SUMMR SESS' THEN 'Summer Session'
-        WHEN 'COLLEGE MEDIA,COMM&INFO' THEN 'CMDI (formerly CMCI)'
-        WHEN 'LEEDS SCHOOL OF BUSINESS' THEN 'Leeds School of Business'
-        WHEN 'SCHOOL OF EDUCATION'      THEN 'School of Education'
-        WHEN 'COLLEGE OF ENGR&APPLIED SCI' THEN 'College of Eng & Applied Sci'
-        WHEN 'COLLEGE OF ENGR&APPLIED SCI' THEN 'College of Eng & Applied Sci'
-        WHEN 'SCHOOL OF LAW'            THEN 'School of Law'
-        WHEN 'LIBRARIES'                THEN 'Libraries'
-        WHEN 'COLLEGE OF MUSIC'         THEN 'College of Music'
-        ELSE 'NA'
-    END AS collegedesc_new,
-    CASE org.ASDIV
-        WHEN 'SS' THEN 'Social Sciences'
-        WHEN 'NS' THEN 'Natural Sciences'
-        WHEN 'AH' THEN 'Arts & Humanities'
-        ELSE ''
-    END AS ASDIV_new
-from roster_v1 roster
-left join &ln.db.div01&month.&year. org
-on roster.deptid = org.deptid;
-quit;
+	select distinct jobtitle, jobcode from roster_final where Catalog_Flag = 1 order by jobcode; quit;
 
 /* Copy to library */
 proc copy in=work out=lib;
-    select roster;  
+    select roster_final;  
 run;
 
 %xlsexport(L:\IR\facstaff\OFA\Faculty Roster\tool_roster.xlsx,lib.roster);
