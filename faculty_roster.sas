@@ -1,3 +1,4 @@
+*************************************************************************************;
 /* EID x FISID Crosswalk */
 proc sql; 
 	create table id as
@@ -18,8 +19,16 @@ proc import datafile="L:\IR\facstaff\OFA\Faculty Roster\aa_fd_person_2025-3-25_1
      replace;
 run;
 
-data fis_degree_v1;
-set fisdb.fis_degree;
+proc sql; 
+	create table fis_degree_v1 as
+	select distinct 
+		degree.FIS_ID,
+		degree.DEGREE_YEAR,
+		name.DEGREE_NAME,
+		degree.INSTITUTION_CODE
+	from fisdb.fis_degree degree
+		left join fisdb.fis_degree_name name
+			on name.DEGREE_NAME_ID = degree.DEGREE_NAME_ID;
 run;
 
 proc sql; 
@@ -33,12 +42,12 @@ proc sql;
 	left join fisdb.fis_institution i
 		on d.INSTITUTION_CODE = i.unitid_code;
 quit;
-	
+
 proc sort data=fis_degree;
     by FIS_ID descending DEGREE_YEAR;
 run;
 
-data fis_top_degree (keep = FIS_ID DEGREE_YEAR DEGREE_NAME);
+data fis_top_degree (keep = FIS_ID DEGREE_YEAR DEGREE_NAME INSTITUTION_NAME_DISPLAY);
     set fis_degree;
     by FIS_ID descending DEGREE_YEAR;
     if first.FIS_ID;
@@ -57,14 +66,19 @@ proc sql;
 	select distinct 
 	id.FIS_ID, 
 	id.EID,
-	case when id.EID in (select distinct clientfacultyid from aa_degree)
-		then aa.degreetypename
-	else fis.DEGREE_NAME
+	case when id.EID in (select distinct EID from fis_top_degree_final)
+		then fis.DEGREE_NAME 
+	else aa.degreetypename
 	end as DegreeName,
-	case when id.EID in (select distinct clientfacultyid from aa_degree)
-		then aa.degreeyear
-	else fis.DEGREE_YEAR
+	case when id.EID in (select distinct EID from fis_top_degree_final)
+		then fis.DEGREE_YEAR 
+	else aa.degreeyear
 	end as DegreeYear,
+
+	case when id.EID in (select distinct EID from fis_top_degree_final)
+		then fis.INSTITUTION_NAME_DISPLAY
+	else aa.degreeinstitutionname 
+	end as DEGREE_INST,
 	case when id.EID in (select distinct clientfacultyid from aa_degree)
 		then "AA" 
 		when id.EID in (select distinct EID from fis_top_degree_final) 
@@ -80,7 +94,7 @@ proc sql;
 		on id.EID = fis.EID;
 quit;
 
-		
+
 
 /* CU Experts URL */
 /* Check that all accounts slated to be exported to CU Experts. From Vance Howard */
@@ -220,7 +234,7 @@ data pre_roster;
 run;
 
 proc sql;
-    create table roster as
+    create table roster_v1 as
     select 
         r.*, 
         d.*, 
@@ -235,7 +249,6 @@ proc sql;
         case 
             when r.jobcode in (&catalog_jobcodes) then 1 else 0 
         end as Catalog_Flag
-/*		monotonic() as rowNo*/
 
     from pre_roster r
     left join degree d on r.EID = d.EID
@@ -243,8 +256,47 @@ proc sql;
     order by r.EID, r.JobCode;
 quit;
 
-data roster_final;  
-    set roster;
+title "Campus Tool Only";
+proc sql; 
+	select distinct jobtitle, jobcode from roster_v1 where Campus_Tool_Flag = 1 order by jobcode; quit;
+
+title "Catalog Only";
+proc sql; 
+	select distinct jobtitle, jobcode from roster_v1 where Catalog_Flag = 1 order by jobcode; quit;
+
+
+proc sql;
+create table 
+	roster_v2 as 
+select roster.*,
+    CASE org.collegedesc
+        WHEN 'COLLEGE ARTS & SCIENCES' THEN 'College of Arts & Sciences'
+        WHEN 'DN,CE & AVC, SUMMR SESS' THEN 'Summer Session'
+        WHEN 'COLLEGE MEDIA,COMM&INFO' THEN 'CMDI (formerly CMCI)'
+        WHEN 'LEEDS SCHOOL OF BUSINESS' THEN 'Leeds School of Business'
+        WHEN 'SCHOOL OF EDUCATION'      THEN 'School of Education'
+        WHEN 'COLLEGE OF ENGR&APPLIED SCI' THEN 'College of Eng & Applied Sci'
+        WHEN 'COLLEGE OF ENGR&APPLIED SCI' THEN 'College of Eng & Applied Sci'
+        WHEN 'SCHOOL OF LAW'            THEN 'School of Law'
+        WHEN 'LIBRARIES'                THEN 'Libraries'
+        WHEN 'COLLEGE OF MUSIC'         THEN 'College of Music'
+        ELSE 'NA'
+    END AS collegedesc_new,
+    CASE org.ASDIV
+        WHEN 'SS' THEN 'Social Sciences'
+        WHEN 'NS' THEN 'Natural Sciences'
+        WHEN 'AH' THEN 'Arts & Humanities'
+        ELSE ''
+    END AS ASDIV_new
+from roster_v1 roster
+left join &ln.db.div01&month.&year. org
+on roster.deptid = org.deptid
+order by EID, JobCode;
+quit;
+
+
+data roster;  
+    set roster_v2;
     by EID JobCode;
     if first.EID then rowNo=1;
     else rowNo+1;
@@ -252,15 +304,15 @@ run;
 
 title "Campus Tool Only";
 proc sql; 
-	select distinct jobtitle, jobcode from roster_final where Campus_Tool_Flag = 1 order by jobcode; quit;
+	select distinct jobtitle, jobcode from roster where Campus_Tool_Flag = 1 order by jobcode; quit;
 
 title "Catalog Only";
 proc sql; 
-	select distinct jobtitle, jobcode from roster_final where Catalog_Flag = 1 order by jobcode; quit;
+	select distinct jobtitle, jobcode from roster where Catalog_Flag = 1 order by jobcode; quit;
 
 /* Copy to library */
 proc copy in=work out=lib;
-    select roster_final;  
+    select roster;  
 run;
 
 %xlsexport(L:\IR\facstaff\OFA\Faculty Roster\tool_roster.xlsx,lib.roster);
