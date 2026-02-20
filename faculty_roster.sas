@@ -79,10 +79,10 @@ proc sql;
 		then fis.INSTITUTION_NAME_DISPLAY
 	else aa.degreeinstitutionname 
 	end as DEGREE_INST,
-	case when id.EID in (select distinct clientfacultyid from aa_degree)
-		then "AA" 
-		when id.EID in (select distinct EID from fis_top_degree_final) 
+	case when id.EID in (select distinct EID from fis_top_degree_final) 
 		then "FIS" 
+		 when id.EID in (select distinct clientfacultyid from aa_degree)
+		then "AA" 
 		else "NA"
 	end as DegreeSource
 	from id 
@@ -266,22 +266,25 @@ proc sql;
 
 
 proc sql;
-create table 
-	roster_v2 as 
+create table roster_v2 as 
 select roster.*,
-    CASE org.collegedesc
-        WHEN 'COLLEGE ARTS & SCIENCES' THEN 'College of Arts & Sciences'
-        WHEN 'DN,CE & AVC, SUMMR SESS' THEN 'Summer Session'
-        WHEN 'COLLEGE MEDIA,COMM&INFO' THEN 'CMDI (formerly CMCI)'
-        WHEN 'LEEDS SCHOOL OF BUSINESS' THEN 'Leeds School of Business'
-        WHEN 'SCHOOL OF EDUCATION'      THEN 'School of Education'
-        WHEN 'COLLEGE OF ENGR&APPLIED SCI' THEN 'College of Eng & Applied Sci'
-        WHEN 'COLLEGE OF ENGR&APPLIED SCI' THEN 'College of Eng & Applied Sci'
-        WHEN 'SCHOOL OF LAW'            THEN 'School of Law'
-        WHEN 'LIBRARIES'                THEN 'Libraries'
-        WHEN 'COLLEGE OF MUSIC'         THEN 'College of Music'
+    CASE 
+        /* Priority 1: Check if the DeptID is in your macro list */
+        WHEN org.DeptID IN (&instDeptIDLst.) THEN 'Institute'
+        
+        /* Priority 2: Standard College Mapping */
+        WHEN org.collegedesc = 'COLLEGE ARTS & SCIENCES' THEN 'College of Arts & Sciences'
+        WHEN org.collegedesc = 'DN,CE & AVC, SUMMR SESS' THEN 'Summer Session'
+        WHEN org.collegedesc = 'COLLEGE MEDIA,COMM&INFO' THEN 'CMDI (formerly CMCI)'
+        WHEN org.collegedesc = 'LEEDS SCHOOL OF BUSINESS' THEN 'Leeds School of Business'
+        WHEN org.collegedesc = 'SCHOOL OF EDUCATION'     THEN 'School of Education'
+        WHEN org.collegedesc = 'COLLEGE OF ENGR&APPLIED SCI' THEN 'College of Eng & Applied Sci'
+        WHEN org.collegedesc = 'SCHOOL OF LAW'            THEN 'School of Law'
+        WHEN org.collegedesc = 'LIBRARIES'                THEN 'Libraries'
+        WHEN org.collegedesc = 'COLLEGE OF MUSIC'          THEN 'College of Music'
         ELSE 'NA'
     END AS collegedesc_new,
+    
     CASE org.ASDIV
         WHEN 'SS' THEN 'Social Sciences'
         WHEN 'NS' THEN 'Natural Sciences'
@@ -294,17 +297,25 @@ on roster.deptid = org.deptid
 order by EID, JobCode;
 quit;
 
-
-data roster;  
+data roster_v3;  
     set roster_v2;
     by EID JobCode;
     if first.EID then rowNo=1;
     else rowNo+1;
 run;
 
+proc sql;
+    create table roster as
+    select *, 
+           count(EID) as active_appts
+    from roster_v3
+    group by EID;
+quit;
+
 title "Campus Tool Only";
 proc sql; 
-	select distinct jobtitle, jobcode from roster where Campus_Tool_Flag = 1 order by jobcode; quit;
+	select distinct 
+	jobtitle, jobcode from roster where Campus_Tool_Flag = 1 order by jobcode; quit;
 
 title "Catalog Only";
 proc sql; 
