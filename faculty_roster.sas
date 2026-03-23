@@ -1,4 +1,7 @@
 *************************************************************************************;
+%fisdb;
+libname lib 'C:\Users\zacr9090\UCB-O365\Data & Analytics (D&A) Team - Analytics & IR\Tableau\Tableau Dashboards\Current\Boulder Data-Analytics\Faculty and Staff\OFA\Faculty Roster & Academic Catalog Reporting Tool';
+
 /* EID x FISID Crosswalk */
 proc sql; 
 	create table id as
@@ -29,7 +32,7 @@ proc sql;
 	from fisdb.fis_degree degree
 		left join fisdb.fis_degree_name name
 			on name.DEGREE_NAME_ID = degree.DEGREE_NAME_ID;
-run;
+quit;
 
 proc sql; 
 	create table fis_degree as
@@ -326,4 +329,4 @@ proc copy in=work out=lib;
     select roster;  
 run;
 
-%xlsexport(L:\IR\facstaff\OFA\Faculty Roster\tool_roster.xlsx,lib.roster);
+%xlsexport(C:\Users\zacr9090\UCB-O365\Data & Analytics (D&A) Team - Analytics & IR\People Analysis\Requests\Faculty Affairs\Faculty Roster and Academic Catalog Reporting Tool\tool_roster.xlsx,lib.roster);
