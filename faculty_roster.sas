@@ -13,7 +13,7 @@ quit;
 	> Benchmarking > aa_fd_person
 	update csv file location
 */
-proc import datafile="L:\IR\facstaff\OFA\Faculty Roster\aa_fd_person_2025-3-25_10-39-37.csv"
+proc import datafile="L:\IR\facstaff\OFA\Faculty Roster\aa_fd_person_2026-3-23_9-40-23.csv"
      out=aa_degree
      dbms=csv
      replace;
