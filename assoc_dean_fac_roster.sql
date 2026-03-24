@@ -7,7 +7,7 @@ with job as(
            JOB_STD_HOURS,
            EMPLOYMENT_REC_NUM
         from ARTEMIS.HRMS_JOB_TBL
-                where job_jb_code = '1428'
+                where job_jb_code IN ('1428', '1435')
                 and JOB_EXPIRATION_DATE > sysdate
                 and JOB_EFFECTIVE_DATE <= sysdate
                 and JOB_DEPT_ID like ('1%')
@@ -59,4 +59,4 @@ select distinct
     left join department dept
     on job.JOB_DEPT_ID = dept.DEPT_ID
 
-order by job.EMPLOYEE_ID;
+order by jobdetail.JB_DESC, job.EMPLOYEE_ID
