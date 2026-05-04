@@ -1,5 +1,5 @@
 %let snapdate=01NOV2025 ;  	* snap date. **MUST** be in ddMMMyyyy format! ;
-%let status = FINAL ; 		* set DRAFT or FINAL date;
+%let status = DRAFT ; 		* set DRAFT or FINAL date;
 %let month = %substr(&snapdate, 3, 3);
 %let year = %substr(&snapdate, 6, 4);
 %put &month &year;
@@ -68,6 +68,22 @@
 	'1103TE' /* IREP - 733 ASST PROFESSOR-TE */
 ;
 
+%let retirees = 
+
+    '1448',  /* EMERITUS */
+    '1452',  /* EMERITUS - PROFESSOR */
+    '1453',  /* EMERITUS - ASSOCIATE PROFESSOR */
+    '1454',  /* EMERITUS - ASSISTANT PROFESSOR */
+    '1455',  /* EMERITUS - SENIOR INSTRUCTOR */
+    '1456',  /* EMERITUS - INSTRUCTOR */
+    '1457',  /* DEAN EMERITUS */
+    '1601',  /* OFFICER EMERITUS/A */
+    '2100',  /* PRESIDENT EMERITUS */
+    '2186',  /* CHANCELLOR EMERITUS */
+    '2900',  /* PRESIDENT EMERITUS */
+    '2901',  /* CHANCELLOR EMERITUS */
+    '2902'   /* DEAN EMERITUS */
+	;
 %let instDeptIDLst='10060' '10066' '10071' '10079' 
 '10080' '10099' '10106' /*'10775'*/ '10057' '11108'
 '10860' '10763' '10112' '10599' '10597' '11214';
