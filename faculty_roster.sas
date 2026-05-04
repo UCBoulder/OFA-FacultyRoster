@@ -11,7 +11,7 @@ proc sql;
 	order by EMPLID;
 quit;
 
-/* Degree - fis degree information highly missing. Relying on Academic Analytics for first match, then FIS if missing
+/* Degree - fis degree information highly missing. Relying on Academic Analytics for backup if FIS record is missing
 	- Retrieve csv from https://portal.academicanalytics.com/resources/downloads
 	> Benchmarking > aa_fd_person
 	update csv file location
