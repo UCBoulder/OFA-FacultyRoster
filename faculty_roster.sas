@@ -138,12 +138,49 @@ proc sql;
 	left join id
 		on a.EID = id.EID
 where jobcode in (
+	'1100TE', /* DISTINGUISHED PROFESSOR-TE */
+	'1101TE', /* DISTINGUISHED PROFESSOR-TE */
+	'1102TE', /* DISTINGUISHED PROFESSOR-TE */
+	'1103TE', /* DISTINGUISHED PROFESSOR-TE */
+	'1100CA', /* Courtsey Appointment */
+	'1101CA', /* Courtsey Appointment */
+	'1102CA', /* Courtsey Appointment */
+	'1103CA', /* Courtsey Appointment */
+	'1107CA', /* Courtsey Appointment */
+	'1108CA', /* Courtsey Appointment */
+	'1109CA', /* Courtsey Appointment */
+	'1470',   /* Ajdoint */
+	'1471',   /* Ajdoint */
+	'1472',   /* Ajdoint */
+	'1473',   /* Ajdoint */
+	'1474',   /* Ajdoint */
+	'1475',   /* Ajdoint */
+	'1476',   /* Ajdoint */
+	'1477',   /* Ajdoint */
+	'1478',   /* Ajdoint */
+	'1479',   /* Ajdoint */
+	'1480',   /* Ajdoint */
+    '1406',   /* PROFESSOR ADJOINT*/
+    '1407',   /* ASSOCIATE PROFESSOR ADJOINT */
+    '1408',   /* ASSISTANT PROFESSOR ADJOINT */
+    '1409',   /*PROFESSOR ADJOINT (ACADEMIC) */
+    '1410',   /*ASSOCIATE PROFESSOR ADJOINT (ACADEMIC) */
+    '1411',   /*ASSISTANT PROFESSOR ADJOINT (ACADEMIC) */
+    '1412',   /*SR INSTR ADJOINT (ACADEMIC)*/
+    '1413',   /*INSTRUCTOR ADJOINT (ACADEMIC)*/
+    '1414',   /* PROFESSOR ADJOINT (ATTEND) */
+    '1415',   /*ASSC PROF ADJOINT (ATTEND) */
+    '1416',   /*ASST PROF ADJOINT (ATTEND) */
+    '1417',   /*SR INSTR ADJOINT (ATTEND) */
+    '1418',   /*INSTRUCTOR ADJOINT (ATTEND) */
+	'1465',   /* INSTRUCTIONAL ASSOCIATE */
     '1101FF',  /* PROFESSOR-FF */
     '1103',    /* ASSISTANT PROFESSOR */
     '1202',    /* CLINICAL ASSOCIATE PROFESSOR */
     '1213',    /* ASST PROFESSOR CLINICAL (C/T) */
     '1401',    /* VISITING PROFESSOR */
     '1423',    /* MUSEUM CURATOR */
+    '1424',     /*MUSEUM CURATOR ADJOINT*/
     '1101',    /* PROFESSOR */
     '1104FF',  /* SENIOR INSTRUCTOR-FF */
     '1211',    /* PROFESSOR CLINICAL (C/T) */
