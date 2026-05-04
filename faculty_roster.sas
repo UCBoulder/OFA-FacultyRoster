@@ -137,112 +137,9 @@ proc sql;
 	from &ln.db.appts&dstitle. a
 	left join id
 		on a.EID = id.EID
-where jobcode in (
-	'1100TE', /* DISTINGUISHED PROFESSOR-TE */
-	'1101TE', /* DISTINGUISHED PROFESSOR-TE */
-	'1102TE', /* DISTINGUISHED PROFESSOR-TE */
-	'1103TE', /* DISTINGUISHED PROFESSOR-TE */
-	'1100CA', /* Courtsey Appointment */
-	'1101CA', /* Courtsey Appointment */
-	'1102CA', /* Courtsey Appointment */
-	'1103CA', /* Courtsey Appointment */
-	'1107CA', /* Courtsey Appointment */
-	'1108CA', /* Courtsey Appointment */
-	'1109CA', /* Courtsey Appointment */
-	'1470',   /* Ajdoint */
-	'1471',   /* Ajdoint */
-	'1472',   /* Ajdoint */
-	'1473',   /* Ajdoint */
-	'1474',   /* Ajdoint */
-	'1475',   /* Ajdoint */
-	'1476',   /* Ajdoint */
-	'1477',   /* Ajdoint */
-	'1478',   /* Ajdoint */
-	'1479',   /* Ajdoint */
-	'1480',   /* Ajdoint */
-    '1406',   /* PROFESSOR ADJOINT*/
-    '1407',   /* ASSOCIATE PROFESSOR ADJOINT */
-    '1408',   /* ASSISTANT PROFESSOR ADJOINT */
-    '1409',   /*PROFESSOR ADJOINT (ACADEMIC) */
-    '1410',   /*ASSOCIATE PROFESSOR ADJOINT (ACADEMIC) */
-    '1411',   /*ASSISTANT PROFESSOR ADJOINT (ACADEMIC) */
-    '1412',   /*SR INSTR ADJOINT (ACADEMIC)*/
-    '1413',   /*INSTRUCTOR ADJOINT (ACADEMIC)*/
-    '1414',   /* PROFESSOR ADJOINT (ATTEND) */
-    '1415',   /*ASSC PROF ADJOINT (ATTEND) */
-    '1416',   /*ASST PROF ADJOINT (ATTEND) */
-    '1417',   /*SR INSTR ADJOINT (ATTEND) */
-    '1418',   /*INSTRUCTOR ADJOINT (ATTEND) */
-	'1465',   /* INSTRUCTIONAL ASSOCIATE */
-    '1101FF',  /* PROFESSOR-FF */
-    '1103',    /* ASSISTANT PROFESSOR */
-    '1202',    /* CLINICAL ASSOCIATE PROFESSOR */
-    '1213',    /* ASST PROFESSOR CLINICAL (C/T) */
-    '1401',    /* VISITING PROFESSOR */
-    '1423',    /* MUSEUM CURATOR */
-    '1424',     /*MUSEUM CURATOR ADJOINT*/
-    '1101',    /* PROFESSOR */
-    '1104FF',  /* SENIOR INSTRUCTOR-FF */
-    '1211',    /* PROFESSOR CLINICAL (C/T) */
-    '1215C',   /* INSTRUCTOR CLINICAL (C/T)- 9MO */
-    '1403',    /* VISITING ASSISTANT PROFESSOR */
-    '1107',    /* TEACHING PROFESSOR */
-    '1213C',   /* ASST PROF CLINICAL (C/T)-9MO */
-    '1405',    /* SPECIAL VISITING PROFESSOR */
-    '1436',    /* ASSOC CHAIR */
-    '1450',    /* ENDOWED OR NAMED PROFESSOR */
-    '2207',    /* PROVOST */
-    '1106FF',  /* PRINCIPAL INSTRUCTOR-FF */
-    '1301',    /* RESEARCH PROFESSOR */
-    '1449',    /* ARTIST IN RESIDENCE */
-    '5102',    /* FACULTY RETIREE EMERITUS ORP */
-    '1104',    /* SENIOR INSTRUCTOR */
-    '1205',    /* CLINICAL INSTRUCTOR */
-    '1214',    /* SR INSTRUCTOR CLINICAL (C/T) */
-    '1435',    /* CHAIR */
-    '1442',    /* SCHOLAR IN RESIDENCE */
-    '2208',    /* EXECUTIVE VICE CHANCELLOR */
-    '1100FF',  /* DISTINGUISHED PROFESSOR-FF */
-    '1302',    /* ASSOCIATE RESEARCH PROFESSOR */
-    '1103FF',  /* ASSISTANT PROFESSOR-FF */
-    '1303',    /* ASSISTANT RESEARCH PROFESSOR */
-    '2210',    /* ASSOC VICE CHANCELLOR */
-    '1108FF',  /* ASSC TEACHING PROFESSOR-FF */
-    '1212C',   /* ASSC PROF CLINICAL (C/T)-9MO */
-    '1451',    /* ENDOWED CHAIR */
-    '1109',    /* ASSISTANT TEACHING PROFESSOR */
-    '1109FF',  /* ASST TEACHING PROFESSOR-FF */
-    '2205',    /* CHANCELLOR */
-    '2214',    /* DEAN */
-    '1304',    /* RESEARCH SCIENTIST */
-    /* '1419',     LECTURER */
-    '2206',    /* EXECUTIVE VICE CHANCELLOR/VP */
-    '1108',    /* ASSOCIATE TEACHING PROFESSOR */
-    '1428',    /* ASSOC DEAN-FACULTY */
-    '1439',    /* FACULTY FELLOW */
-    '1105FF',  /* INSTRUCTOR-FF */
-    '1311',    /* SENIOR RESEARCH SCIENTIST */
-    '1102',    /* ASSOCIATE PROFESSOR */
-    '1102FF',  /* ASSOCIATE PROFESSOR-FF */
-    '1203',    /* CLINICAL ASSISTANT PROFESSOR */
-    '1212',    /* ASSC PROFESSOR CLINICAL (C/T) */
-    '1422',    /* VISITING INSTRUCTOR */
-    '1433',    /* DIRECTOR-FACULTY */
-    '1100',    /* DISTINGUISHED PROFESSOR */
-    '1107FF',  /* TEACHING PROFESSOR-FF */
-    '1201',    /* CLINICAL PROFESSOR */
-    '1214C',   /* SR INSTR CLINICAL (C/T)-9MO */
-    '1402',    /* VISITING ASSOCIATE PROFESSOR */
-  /*  '1420',    /* VISITING LECTURER */
-    '1446',    /* DIRECTOR-INSTITUTE */
-    '1105',    /* INSTRUCTOR */
-    '1204',    /* CLINICAL SENIOR INSTRUCTOR */
-    '1211C',   /* PROFESSOR CLINICAL (C/T)-9MO */
-    '1215',    /* INSTRUCTOR CLINICAL (C/T) */
-    '1425',    /* VISITING MUSEUM CURATOR */
-    '1434',    /* ASSOC DIRECTOR-FACULTY */
-    '2209'     /* VICE CHANCELLOR */
-);
+where jobcode in (&campus_tool_jobcodes) 
+    or jobcode in (&catalog_jobcodes)
+;
 
 	create table retirees as
 	select distinct 
@@ -251,21 +148,7 @@ where jobcode in (
 	left join id
 		on r.EID = id.EID
 	where jobcode in 
-	(
-    '1448',  /* EMERITUS */
-    '1452',  /* EMERITUS - PROFESSOR */
-    '1453',  /* EMERITUS - ASSOCIATE PROFESSOR */
-    '1454',  /* EMERITUS - ASSISTANT PROFESSOR */
-    '1455',  /* EMERITUS - SENIOR INSTRUCTOR */
-    '1456',  /* EMERITUS - INSTRUCTOR */
-    '1457',  /* DEAN EMERITUS */
-    '1601',  /* OFFICER EMERITUS/A */
-    '2100',  /* PRESIDENT EMERITUS */
-    '2186',  /* CHANCELLOR EMERITUS */
-    '2900',  /* PRESIDENT EMERITUS */
-    '2901',  /* CHANCELLOR EMERITUS */
-    '2902'   /* DEAN EMERITUS */
-	);
+	(&retirees);
 quit;
 
 data pre_roster;
